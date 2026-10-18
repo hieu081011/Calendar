@@ -198,6 +198,11 @@ const CHI = ['Tý','Sửu','Dần','Mão','Thìn','Tỵ','Ngọ','Mùi','Thân',
 const TZ = 7;
 const STORE_KEY = 'lichnho-v1';
 const API_STORE = 'lichnho-api';
+// Kết nối mặc định cho mọi thiết bị. Lưu ý: repo public → ai xem source cũng thấy key này.
+const DEFAULT_API = {
+  url: 'https://script.google.com/macros/s/AKfycbxD3grye0EPXMYpDc8hL-CBGiX0lzWJG7bYobSEESKNGqw4AX3440IHc0DuSiZJMXwAKw/exec',
+  key: 'f0a05fe1-ec7e-48a1-b838-5e1eb0566425'
+};
 
 /* ---------- Thuật toán lịch âm ---------- */
 const INT = Math.floor, PI = Math.PI;
@@ -362,7 +367,7 @@ const S = {
   showLunar:true, markRam:true, weekMon:true,
   filter:'all', editingId:null, msg:'', msgErr:false,
   form: blankForm(), events: DEFAULT_EVENTS.map(e => ({ ...e })),
-  api: { url:'', key:'' }, apiForm: { url:'', key:'' }, apiErr:'', sync:'local', syncMsg:''
+  api: { ...DEFAULT_API }, apiForm: { ...DEFAULT_API }, apiErr:'', sync: DEFAULT_API.url ? 'loading' : 'local', syncMsg:''
 };
 try {
   const a = JSON.parse(localStorage.getItem(API_STORE) || 'null');
@@ -621,7 +626,7 @@ function renderConfig() {
       </section>
       <section class="card" aria-label="Kết nối Google Sheet" style="gap:12px">
         <h2 style="font-size:16px">Kết nối Google Sheet</h2>
-        <p class="empty" style="font-size:13px">Dán URL Web App (đuôi /exec) và API key từ Apps Script. Thông tin chỉ lưu trong trình duyệt này, không nằm trong mã nguồn.</p>
+        <p class="empty" style="font-size:13px">App đã có sẵn kết nối mặc định cho mọi thiết bị. Chỉ cần nhập ở đây nếu muốn dùng Sheet khác trên trình duyệt này.</p>
         <div class="field"><label for="f-url">URL Web App</label>
           <input id="f-url" class="inp" type="url" value="${esc(S.apiForm.url)}" placeholder="https://script.google.com/macros/s/…/exec" data-api="url"></div>
         <div class="field"><label for="f-key">API key</label>
@@ -629,7 +634,7 @@ function renderConfig() {
         ${S.apiErr || S.syncMsg ? `<p class="msg${S.apiErr || S.sync === 'err' ? ' err' : ''}" role="status">${esc(S.apiErr || S.syncMsg)}</p>` : ''}
         <div class="tools2">
           <button type="button" class="btn" data-act="connect">${S.api.url ? 'Lưu & tải lại' : 'Kết nối'}</button>
-          ${S.api.url ? '<button type="button" class="btn" data-act="disconnect">Ngắt kết nối</button>' : ''}
+          ${S.api.url !== DEFAULT_API.url || S.api.key !== DEFAULT_API.key ? '<button type="button" class="btn" data-act="resetApi">Về kết nối mặc định</button>' : ''}
         </div>
       </section>
       <section class="card" aria-label="Tuỳ chọn hiển thị" style="gap:4px">
@@ -723,9 +728,11 @@ const actions = {
     pull(true);
     return false;
   },
-  disconnect: () => {
-    S.api = { url:'', key:'' }; S.apiForm = { url:'', key:'' }; S.apiErr = ''; S.sync = 'local'; S.syncMsg = '';
+  resetApi: () => {
+    S.api = { ...DEFAULT_API }; S.apiForm = { ...DEFAULT_API }; S.apiErr = '';
     try { localStorage.removeItem(API_STORE); } catch (e) {}
+    pull();
+    return false;
   },
   export: () => {
     const blob = new Blob([JSON.stringify({ events:S.events }, null, 2)], { type:'application/json' });
