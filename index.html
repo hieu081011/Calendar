@@ -61,7 +61,7 @@ h1,h2,p{margin:0}
 .lunar{font-size:11px;color:var(--faint);white-space:nowrap}
 .lunar.sp{color:var(--accent);font-weight:700}
 .hide-lunar .lunar{display:none}
-.chip{display:block;font-size:11px;font-weight:500;line-height:1.3;padding:2px 6px;border-radius:6px;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;font-size:11px;font-weight:500;line-height:1.3;padding:2px 6px;border-radius:6px;background:#fff;overflow:hidden;overflow-wrap:anywhere;flex:none}
 .more{font-size:11px;color:var(--muted);padding-left:6px}
 .dots{display:none;gap:3px;height:6px;align-items:center}
 .dots i{width:6px;height:6px;border-radius:3px}
@@ -486,7 +486,7 @@ function renderCalendar() {
     const aria = `${inf.d}/${inf.m}/${inf.y}, âm lịch ${inf.ld}/${inf.lm}${evs.length ? ', ' + evs.map(e => e.name).join(', ') : ''}`;
     cells += `<button type="button" class="${cls}" ${bg} data-act="pick" data-arg="${jd}" aria-label="${esc(aria)}">
       <span class="hd"><span class="num">${inf.d}</span><span class="lunar${special ? ' sp' : ''}">${lunarLabel}</span></span>
-      ${evs.slice(0, 2).map(e => `<span class="chip" style="color:${cat(e.cat).ink}">${esc(e.name)}</span>`).join('')}
+      ${evs.slice(0, 2).map(e => `<span class="chip" style="color:${cat(e.cat).ink}" title="${esc(e.name)}">${esc(e.name)}</span>`).join('')}
       ${evs.length > 2 ? `<span class="more">+${evs.length - 2} sự kiện</span>` : ''}
       <span class="dots">${evs.slice(0, 3).map(e => `<i style="background:${cat(e.cat).color}"></i>`).join('')}</span>
     </button>`;
