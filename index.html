@@ -158,6 +158,11 @@ textarea.inp{padding:10px 14px;resize:vertical}
   .chip,.more{display:none}
   .dots{display:flex}
 }
+/* màn hình hẹp: danh sách chỉ giữ ô ngày + tên, ẩn dòng chi tiết */
+@media (max-width:500px){
+  .item .grow span{display:none}
+  .item{align-items:center}
+}
 /* modal xác nhận */
 .modal{width:min(420px,calc(100% - 32px));padding:0;border:0;border-radius:20px;background:var(--surface);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.25)}
 .modal::backdrop{background:rgba(22,24,29,.45)}
