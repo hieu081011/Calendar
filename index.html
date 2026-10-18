@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch Nhớ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#C8372D; --accent-soft:#C8372D1A;
+  --bg:#F4F5F7; --surface:#FFFFFF; --line:#E3E5EA; --line-2:#ECEEF2;
+  --ink:#16181D; --ink-2:#4A5060; --muted:#5A6070; --faint:#6B7180; --sun:#B42318;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Be Vietnam Pro',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 32px 48px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+h1,h2,p{margin:0}
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.brand{display:flex;align-items:center;gap:12px;flex:1 1 240px;min-width:0}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.brand b{font-size:18px;letter-spacing:-.01em;display:block}
+.brand small{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:flex;background:#E8EAEE;border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1 1 0;min-height:40px;padding:0 18px;border:0;border-radius:9px;font-size:14px;font-weight:600;white-space:nowrap;background:transparent;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.seg.sm{border-radius:10px;padding:3px;gap:3px;background:#EEF0F3}
+.seg.sm button{min-height:36px;padding:0 12px;font-size:13px;border-radius:8px;flex:0 0 auto}
+/* calendar */
+.cal{flex:999 1 560px;min-width:0}
+.side{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.calhead{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.calhead .t{flex:1 1 200px;min-width:0}
+.calhead h1{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.calhead span{font-size:13px;color:var(--muted)}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#F7F8FA}
+.icon{width:40px;padding:0;justify-content:center}
+.switch{width:34px;height:20px;border-radius:10px;background:#C3C7CF;display:flex;align-items:center;padding:2px;transition:background .15s}
+.switch i{width:16px;height:16px;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:margin .15s}
+[aria-checked="true"] .switch{background:var(--accent)}
+[aria-checked="true"] .switch i{margin-left:14px}
+.grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.wd{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:4px 0}
+.wd.sun{color:var(--sun)}
+.cell{min-height:104px;padding:8px;border:1px solid var(--line-2);border-radius:12px;background:#fff;display:flex;flex-direction:column;gap:4px;text-align:left;min-width:0;overflow:hidden;transition:border-color .12s}
+.cell:hover{border-color:#C9CDD5}
+.cell.out{opacity:.45;background:#FAFBFC}
+.cell.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cell .hd{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 5px;border-radius:13px;font-size:14px;font-weight:600}
+.cell.sunday .num{color:var(--sun)}
+.cell.today .num{background:var(--accent);color:#fff}
+.lunar{font-size:11px;color:var(--faint);white-space:nowrap}
+.lunar.sp{color:var(--accent);font-weight:700}
+.hide-lunar .lunar{display:none}
+.chip{display:block;font-size:11px;font-weight:500;line-height:1.3;padding:2px 6px;border-radius:6px;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:11px;color:var(--muted);padding-left:6px}
+.dots{display:none;gap:3px;height:6px;align-items:center}
+.dots i{width:6px;height:6px;border-radius:3px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;border-top:1px solid #EEF0F3;padding-top:14px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.legend i{width:10px;height:10px;border-radius:3px}
+/* side */
+.dayhead{display:flex;gap:14px;align-items:center}
+.daybox{width:64px;height:64px;border-radius:16px;background:var(--accent-soft);color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;gap:2px}
+.daybox small{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.daybox b{font-size:26px;line-height:1}
+.dayinfo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.dayinfo b{font-size:16px;font-weight:600}
+.dayinfo span{font-size:13px;color:var(--ink-2)}
+.dayinfo small{font-size:12px;color:var(--muted)}
+.hr{height:1px;background:#EEF0F3}
+.ev{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px}
+.ev .dot{width:8px;height:8px;border-radius:4px;margin-top:6px;flex:none}
+.ev b{font-size:14px;font-weight:600;display:block}
+.ev span{font-size:12px;color:var(--ink-2)}
+.empty{font-size:14px;color:var(--muted)}
+.dashed{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px dashed #C9CDD5;border-radius:12px;background:#fff;font-size:14px;font-weight:600}
+.dashed:hover{border-color:var(--accent);color:var(--accent)}
+.up{display:flex;align-items:center;gap:12px;padding:8px;margin:0 -8px;border:0;border-radius:12px;background:transparent;text-align:left;min-width:0;width:calc(100% + 16px)}
+.up:hover{background:#F6F7F9}
+.badge{width:44px;height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;line-height:1.1}
+.badge b{font-size:16px}
+.badge small{font-size:10px;font-weight:600}
+.grow{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
+.grow b{font-size:14px;font-weight:600}
+.grow b,.grow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grow span{font-size:12px;color:var(--muted)}
+.pill{font-size:12px;font-weight:600;padding:4px 8px;border-radius:999px;background:#F1F2F5;color:var(--ink-2);white-space:nowrap;flex:none}
+.pill.soon{background:var(--accent-soft);color:var(--accent)}
+.sync{min-height:32px;padding:0 12px;border:0;border-radius:999px;font-size:12px;font-weight:600;background:#F1F2F5;color:var(--ink-2);white-space:nowrap}
+.sync.ok{background:#E1F3F0;color:#0B6158}
+.sync.err{background:#FDECEA;color:#9A2219}
+/* config */
+.form{flex:1 1 340px;min-width:0;gap:18px}
+.listcol{flex:999 1 480px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.field>.lbl{font-size:13px;font-weight:600;color:var(--ink-2)}
+.inp{min-height:44px;padding:0 14px;border:1px solid #D5D8DE;border-radius:12px;font-size:16px;background:#fff;width:100%}
+select.inp{padding:0 10px}
+textarea.inp{padding:10px 14px;resize:vertical}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.preview{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bg)}
+.preview small{font-size:12px;color:var(--muted);display:block}
+.preview b{font-size:14px;display:block}
+.preview span{font-size:12px;color:var(--ink-2);display:block}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cat{display:flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid #D5D8DE;border-radius:999px;background:#fff;font-size:13px;font-weight:600;color:var(--ink-2)}
+.cat i{width:8px;height:8px;border-radius:4px}
+.msg{font-size:13px;font-weight:500;color:#0B6158}
+.msg.err{color:var(--sun)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.primary{flex:1 1 160px;min-height:46px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600}
+.primary:hover{filter:brightness(.95)}
+.ghost{min-height:46px;padding:0 18px;border:1px solid #D5D8DE;border-radius:12px;background:#fff;font-size:15px;font-weight:600}
+.listhead{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.listhead .t{flex:1 1 160px;display:flex;align-items:baseline;gap:8px}
+.listhead h2{font-size:18px}
+.listhead span{font-size:13px;color:var(--muted)}
+.item{display:flex;align-items:center;gap:12px;padding:10px 10px 10px 12px;border-radius:14px;border:1px solid var(--line-2);min-width:0}
+.item.editing{border-color:var(--accent)}
+.item .grow b{font-size:15px}
+.item .grow span+span{color:var(--ink-2)}
+.ib{width:40px;height:40px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--ink-2);display:flex;align-items:center;justify-content:center;padding:0}
+.ib:hover{background:#F1F2F5;color:var(--ink)}
+.set{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0;border:0;background:transparent;text-align:left;width:100%}
+.set b{font-weight:500;font-size:14px;display:block}
+.set small{font-size:12px;color:var(--muted);display:block}
+.set .switch{width:40px;height:24px;border-radius:12px;flex:none}
+.set .switch i{width:20px;height:20px;border-radius:10px}
+.set[aria-checked="true"] .switch i{margin-left:16px}
+.tools2{display:flex;gap:8px;flex-wrap:wrap}
+/* mobile */
+@media (max-width:760px){
+  .wrap{padding:16px 12px 32px;gap:14px}
+  .row{gap:14px}
+  .side,.listcol{gap:14px}
+  .card{padding:16px 12px;border-radius:18px}
+  .top .seg{flex:1 1 100%}
+  .calhead h1{font-size:22px}
+  .grid7{gap:4px}
+  .cell{min-height:58px;padding:6px 2px;align-items:center;border-radius:10px}
+  .cell .hd{flex-direction:column;gap:2px}
+  .num{width:28px;height:28px;min-width:28px;padding:0;border-radius:14px}
+  .lunar{font-size:10px;line-height:1}
+  .chip,.more{display:none}
+  .dots{display:flex}
+}
+/* modal xác nhận */
+.modal{width:min(420px,calc(100% - 32px));padding:0;border:0;border-radius:20px;background:var(--surface);color:var(--ink);box-shadow:0 20px 50px rgba(16,24,40,.25)}
+.modal::backdrop{background:rgba(22,24,29,.45)}
+.modal form{padding:24px;display:flex;flex-direction:column;gap:10px}
+.modal h2{font-size:18px;letter-spacing:-.01em}
+.modal p{font-size:14px;line-height:1.5;color:var(--ink-2)}
+.modal .actions{margin-top:10px;justify-content:flex-end}
+.modal .primary{flex:0 0 auto;padding:0 22px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="ask" class="modal" aria-labelledby="ask-t" aria-describedby="ask-m">
+  <form method="dialog">
+    <h2 id="ask-t"></h2>
+    <p id="ask-m"></p>
+    <div class="actions">
+      <button type="submit" class="ghost" value="cancel" id="ask-no" autofocus>Huỷ</button>
+      <button type="submit" class="primary" value="ok" id="ask-ok">Đồng ý</button>
+    </div>
+  </form>
+</dialog>
+<script>
+/* =========================================================
+   Lịch Nhớ — quản lý ngày quan trọng (dương lịch + âm lịch)
+   Lịch âm: thuật toán Hồ Ngọc Đức, múi giờ +7.
+   Dữ liệu lưu trên Google Sheet (qua Apps Script, xem apps-script/Code.gs),
+   kèm bản sao trong localStorage để dùng khi mất mạng / chưa kết nối.
+   ========================================================= */
+const CATS = [
+  { id:'tet', label:'Lễ, Tết', color:'#C8372D', tint:'#FDECEA', ink:'#9A2219' },
+  { id:'gio', label:'Cúng giỗ', color:'#7A4CC4', tint:'#F1EBFB', ink:'#5A3596' },
+  { id:'birthday', label:'Sinh nhật', color:'#2F6BDE', tint:'#E8F0FD', ink:'#1E4EA6' },
+  { id:'anniv', label:'Kỷ niệm', color:'#0F8A7E', tint:'#E1F3F0', ink:'#0B6158' },
+  { id:'other', label:'Khác', color:'#6B7180', tint:'#EEEFF2', ink:'#3F4552' }
+];
+const WD_FULL = ['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+const WD_SHORT = ['CN','T2','T3','T4','T5','T6','T7'];
+const LM = ['Giêng','Hai','Ba','Tư','Năm','Sáu','Bảy','Tám','Chín','Mười','Một','Chạp'];
+const CAN = ['Giáp','Ất','Bính','Đinh','Mậu','Kỷ','Canh','Tân','Nhâm','Quý'];
+const CHI = ['Tý','Sửu','Dần','Mão','Thìn','Tỵ','Ngọ','Mùi','Thân','Dậu','Tuất','Hợi'];
+const TZ = 7;
+const STORE_KEY = 'lichnho-v1';
+const API_STORE = 'lichnho-api';
+
+/* ---------- Thuật toán lịch âm ---------- */
+const INT = Math.floor, PI = Math.PI;
+function jdFromDate(dd, mm, yy) {
+  const a = INT((14 - mm) / 12), y = yy + 4800 - a, m = mm + 12 * a - 3;
+  let jd = dd + INT((153 * m + 2) / 5) + 365 * y + INT(y / 4) - INT(y / 100) + INT(y / 400) - 32045;
+  if (jd < 2299161) jd = dd + INT((153 * m + 2) / 5) + 365 * y + INT(y / 4) - 32083;
+  return jd;
+}
+function jdToDate(jd) {
+  let a, b, c;
+  if (jd > 2299160) { a = jd + 32044; b = INT((4 * a + 3) / 146097); c = a - INT((b * 146097) / 4); }
+  else { b = 0; c = jd + 32082; }
+  const d = INT((4 * c + 3) / 1461), e = c - INT((1461 * d) / 4), m = INT((5 * e + 2) / 153);
+  return [e - INT((153 * m + 2) / 5) + 1, m + 3 - 12 * INT(m / 10), b * 100 + d - 4800 + INT(m / 10)];
+}
+function newMoon(k, tz) {
+  const T = k / 1236.85, T2 = T * T, T3 = T2 * T, dr = PI / 180;
+  let Jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * T2 - 0.000000155 * T3;
+  Jd1 += 0.00033 * Math.sin((166.56 + 132.87 * T - 0.009173 * T2) * dr);
+  const M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3;
+  const Mpr = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3;
+  const F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3;
+  let C1 = (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M);
+  C1 = C1 - 0.4068 * Math.sin(Mpr * dr) + 0.0161 * Math.sin(dr * 2 * Mpr);
+  C1 = C1 - 0.0004 * Math.sin(dr * 3 * Mpr);
+  C1 = C1 + 0.0104 * Math.sin(dr * 2 * F) - 0.0051 * Math.sin(dr * (M + Mpr));
+  C1 = C1 - 0.0074 * Math.sin(dr * (M - Mpr)) + 0.0004 * Math.sin(dr * (2 * F + M));
+  C1 = C1 - 0.0004 * Math.sin(dr * (2 * F - M)) - 0.0006 * Math.sin(dr * (2 * F + Mpr));
+  C1 = C1 + 0.0010 * Math.sin(dr * (2 * F - Mpr)) + 0.0005 * Math.sin(dr * (2 * Mpr + M));
+  const deltat = T < -11
+    ? 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3
+    : -0.000278 + 0.000265 * T + 0.000262 * T2;
+  return INT(Jd1 + C1 - deltat + 0.5 + tz / 24);
+}
+function sunLong(jdn, tz) {
+  const T = (jdn - 2451545.5 - tz / 24) / 36525, T2 = T * T, dr = PI / 180;
+  const M = 357.52910 + 35999.05030 * T - 0.0001559 * T2 - 0.00000048 * T * T2;
+  const L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2;
+  let DL = (1.914600 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M);
+  DL += (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.000290 * Math.sin(dr * 3 * M);
+  let L = (L0 + DL) * dr;
+  L = L - PI * 2 * INT(L / (PI * 2));
+  return INT(L / PI * 6);
+}
+function month11(yy, tz) {
+  const k = INT((jdFromDate(31, 12, yy) - 2415021) / 29.530588853);
+  let nm = newMoon(k, tz);
+  if (sunLong(nm, tz) >= 9) nm = newMoon(k - 1, tz);
+  return nm;
+}
+function leapOffset(a11, tz) {
+  const k = INT((a11 - 2415021.076998695) / 29.530588853 + 0.5);
+  let last = 0, i = 1, arc = sunLong(newMoon(k + i, tz), tz);
+  do { last = arc; i++; arc = sunLong(newMoon(k + i, tz), tz); } while (arc !== last && i < 14);
+  return i - 1;
+}
+function solar2lunar(dd, mm, yy, tz) {
+  const dayNumber = jdFromDate(dd, mm, yy);
+  const k = INT((dayNumber - 2415021.076998695) / 29.530588853);
+  let monthStart = newMoon(k + 1, tz);
+  if (monthStart > dayNumber) monthStart = newMoon(k, tz);
+  let a11 = month11(yy, tz), b11 = a11, lunarYear;
+  if (a11 >= monthStart) { lunarYear = yy; a11 = month11(yy - 1, tz); }
+  else { lunarYear = yy + 1; b11 = month11(yy + 1, tz); }
+  const lunarDay = dayNumber - monthStart + 1;
+  const diff = INT((monthStart - a11) / 29);
+  let lunarLeap = 0, lunarMonth = diff + 11;
+  if (b11 - a11 > 365) {
+    const lmd = leapOffset(a11, tz);
+    if (diff >= lmd) { lunarMonth = diff + 10; if (diff === lmd) lunarLeap = 1; }
+  }
+  if (lunarMonth > 12) lunarMonth -= 12;
+  if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
+  return [lunarDay, lunarMonth, lunarYear, lunarLeap];
+}
+function lunar2solar(ld, lm, ly, leap, tz) {
+  let a11, b11;
+  if (lm < 11) { a11 = month11(ly - 1, tz); b11 = month11(ly, tz); }
+  else { a11 = month11(ly, tz); b11 = month11(ly + 1, tz); }
+  const k = INT(0.5 + (a11 - 2415021.076998695) / 29.530588853);
+  let off = lm - 11;
+  if (off < 0) off += 12;
+  if (b11 - a11 > 365) {
+    const lo = leapOffset(a11, tz);
+    let leapMonth = lo - 2;
+    if (leapMonth < 0) leapMonth += 12;
+    if (leap !== 0 && lm !== leapMonth) return [0, 0, 0];
+    else if (leap !== 0 || off >= lo) off += 1;
+  }
+  return jdToDate(newMoon(k + off, tz) + ld - 1);
+}
+
+/* ---------- Tiện ích ngày ---------- */
+const cache = {};
+function info(jd) {
+  if (cache[jd]) return cache[jd];
+  const [d, m, y] = jdToDate(jd);
+  const [ld, lm, ly, leap] = solar2lunar(d, m, y, TZ);
+  return (cache[jd] = { jd, d, m, y, ld, lm, ly, leap, wd: (jd + 1) % 7 });
+}
+const jdOf = (y, m, d) => jdFromDate(d, m, y);
+const canChiYear = y => CAN[(y + 6) % 10] + ' ' + CHI[(y + 8) % 12];
+const canChiDay = jd => CAN[(jd + 9) % 10] + ' ' + CHI[(jd + 1) % 12];
+const canChiMonth = (lm, ly) => CAN[(ly * 12 + lm + 3) % 10] + ' ' + CHI[(lm + 1) % 12];
+const lunarDayName = d => d === 15 ? 'Rằm' : (d <= 10 ? 'Mùng ' + d : 'Ngày ' + d);
+const lmName = i => LM[i.lm - 1] + (i.leap ? ' nhuận' : '');
+const pad = n => (n < 10 ? '0' : '') + n;
+const fmt = i => pad(i.d) + '/' + pad(i.m) + '/' + i.y;
+const cat = id => CATS.find(c => c.id === id) || CATS[4];
+const countdown = n => n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : 'Còn ' + n + ' ngày';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const evDate = e => e.type === 'solar'
+  ? 'Ngày ' + e.day + '/' + e.month + ' dương lịch'
+  : lunarDayName(e.day) + ' tháng ' + LM[e.month - 1] + ' âm lịch';
+
+function matches(inf, events) {
+  return events.filter(e => {
+    if (e.type === 'solar') return e.day === inf.d && e.month === inf.m;
+    if (inf.leap || e.month !== inf.lm) return false;
+    if (e.day === inf.ld) return true;
+    // giỗ ngày 30 nhưng tháng thiếu (29 ngày) → tính vào ngày 29
+    return e.day === 30 && inf.ld === 29 && info(inf.jd + 1).ld === 1;
+  });
+}
+function lunarToJd(d, m, ly) {
+  const r = lunar2solar(d, m, ly, 0, TZ);
+  if (!r[0]) return null;
+  let jd = jdOf(r[2], r[1], r[0]);
+  if (d === 30 && info(jd).ld !== 30) jd -= 1;
+  return jd;
+}
+function nextOcc(e, fromJd) {
+  const fi = info(fromJd);
+  let best = null;
+  if (e.type === 'solar') {
+    for (let yy = fi.y; yy <= fi.y + 4; yy++) {
+      const dt = new Date(yy, e.month - 1, e.day);
+      if (dt.getMonth() !== e.month - 1) continue;
+      const jd = jdOf(yy, e.month, e.day);
+      if (jd >= fromJd) { best = jd; break; }
+    }
+  } else {
+    for (const ly of [fi.ly - 1, fi.ly, fi.ly + 1]) {
+      const jd = lunarToJd(e.day, e.month, ly);
+      if (jd && jd >= fromJd) { best = jd; break; }
+    }
+  }
+  return best === null ? null : { jd: best, diff: best - fromJd, inf: info(best) };
+}
+
+/* ---------- Trạng thái ---------- */
+const DEFAULT_EVENTS = [
+  { id:'e1', name:'Tết Dương lịch', type:'solar', day:1, month:1, cat:'tet', remind:3, note:'' },
+  { id:'e14', name:'Ông Công Ông Táo', type:'lunar', day:23, month:12, cat:'tet', remind:3, note:'' }
+];
+const blankForm = () => ({ name:'', type:'lunar', day:1, month:1, cat:'gio', remind:3, note:'', srcJd:null });
+const now = new Date();
+const today = { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
+const S = {
+  view:'calendar', vy:today.y, vm:today.m, sel:{ ...today },
+  showLunar:true, markRam:true, weekMon:true,
+  filter:'all', editingId:null, msg:'', msgErr:false,
+  form: blankForm(), events: DEFAULT_EVENTS.map(e => ({ ...e })),
+  api: { url:'', key:'' }, apiForm: { url:'', key:'' }, apiErr:'', sync:'local', syncMsg:''
+};
+try {
+  const a = JSON.parse(localStorage.getItem(API_STORE) || 'null');
+  if (a && a.url) { S.api = { url:a.url, key:a.key || '' }; S.apiForm = { ...S.api }; S.sync = 'loading'; }
+} catch (e) {}
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+  if (saved && Array.isArray(saved.events)) {
+    S.events = saved.events;
+    ['showLunar','markRam','weekMon'].forEach(k => { if (typeof saved[k] === 'boolean') S[k] = saved[k]; });
+  }
+} catch (e) {}
+function persist() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ events:S.events, showLunar:S.showLunar, markRam:S.markRam, weekMon:S.weekMon }));
+  } catch (e) {}
+}
+
+/* ---------- Google Sheet (Apps Script Web App) ---------- */
+// Gửi text/plain để không bị CORS preflight — Apps Script không xử lý OPTIONS.
+async function api(action, payload) {
+  const res = await fetch(S.api.url, { method:'POST', body: JSON.stringify({ action, key:S.api.key, ...payload }) });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Lỗi không xác định');
+  return data;
+}
+/* ---------- Modal xác nhận (thay cho confirm) ---------- */
+// Trả về Promise<boolean>: true khi bấm nút đồng ý; Esc, Huỷ hoặc bấm ra ngoài → false.
+function ask({ title, message = '', ok = 'Đồng ý', cancel = 'Huỷ' }) {
+  const d = document.getElementById('ask');
+  d.querySelector('#ask-t').textContent = title;
+  d.querySelector('#ask-m').textContent = message;
+  d.querySelector('#ask-ok').textContent = ok;
+  d.querySelector('#ask-no').textContent = cancel;
+  d.returnValue = '';
+  d.showModal();
+  return new Promise(res => d.addEventListener('close', () => res(d.returnValue === 'ok'), { once:true }));
+}
+document.getElementById('ask').addEventListener('click', ev => {
+  if (ev.target === ev.currentTarget) ev.currentTarget.close(); // bấm vào nền mờ
+});
+
+async function pull(seedIfEmpty) {
+  if (!S.api.url) return;
+  S.sync = 'loading'; S.syncMsg = ''; render();
+  try {
+    const d = await api('list');
+    if (seedIfEmpty && !d.events.length && S.events.length &&
+        await ask({ title:'Google Sheet đang trống',
+          message:'Đẩy ' + S.events.length + ' ngày đang có trên máy lên Sheet? Chọn "Không" để dùng Sheet trống.',
+          ok:'Đẩy lên Sheet', cancel:'Không' })) {
+      await api('replaceAll', { events:S.events });
+      S.syncMsg = 'Đã đẩy ' + S.events.length + ' ngày lên Google Sheet.';
+    } else {
+      S.events = d.events; persist();
+      S.syncMsg = 'Đã tải ' + d.events.length + ' ngày từ Google Sheet.';
+    }
+    S.sync = 'ok';
+  } catch (e) {
+    S.sync = 'err'; S.syncMsg = 'Không kết nối được Google Sheet (' + e.message + '). Đang dùng dữ liệu lưu trên máy.';
+  }
+  render();
+}
+function push(action, payload, okMsg) {
+  if (!S.api.url) return;
+  S.sync = 'loading';
+  api(action, payload)
+    .then(() => { S.sync = 'ok'; S.syncMsg = okMsg; })
+    .catch(e => { S.sync = 'err'; S.syncMsg = 'Chưa ghi được lên Google Sheet (' + e.message + '). Thay đổi mới chỉ lưu trên máy.'; })
+    .then(render);
+}
+
+/* ---------- Icons ---------- */
+const ic = {
+  cal:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  left:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  right:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
+  plus:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  edit:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  del:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+  down:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>',
+  up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V8M6 14l6-6 6 6M4 4h16"/></svg>'
+};
+
+/* ---------- Render ---------- */
+const todayJd = jdOf(today.y, today.m, today.d);
+
+function renderHeader() {
+  const t = info(todayJd);
+  const syncLabel = { local:'Chỉ lưu trên máy', loading:'Đang đồng bộ…', ok:'Đã đồng bộ Sheet', err:'Lỗi đồng bộ' }[S.sync];
+  return `<header class="top">
+    <div class="brand"><span class="logo">${ic.cal}</span>
+      <div style="min-width:0"><b>Lịch Nhớ</b><small>Hôm nay: ${WD_FULL[t.wd]}, ${fmt(t)} · ${t.ld}/${t.lm} âm lịch</small></div>
+    </div>
+    <button type="button" class="sync ${S.sync}" data-act="view" data-arg="config" title="${esc(S.syncMsg)}">${syncLabel}</button>
+    <nav class="seg" aria-label="Chế độ xem">
+      <button type="button" data-act="view" data-arg="calendar" aria-pressed="${S.view === 'calendar'}">Lịch</button>
+      <button type="button" data-act="view" data-arg="config" aria-pressed="${S.view === 'config'}">Ngày quan trọng</button>
+    </nav>
+  </header>`;
+}
+
+function renderCalendar() {
+  const firstJd = jdOf(S.vy, S.vm, 1);
+  const dim = new Date(S.vy, S.vm, 0).getDate();
+  const firstWd = info(firstJd).wd;
+  const offset = S.weekMon ? (firstWd + 6) % 7 : firstWd;
+  const rows = Math.ceil((offset + dim) / 7);
+  const selJd = jdOf(S.sel.y, S.sel.m, S.sel.d);
+  const wdOrder = S.weekMon ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6];
+
+  let cells = '';
+  for (let i = 0; i < rows * 7; i++) {
+    const jd = firstJd - offset + i, inf = info(jd);
+    const evs = matches(inf, S.events);
+    const special = S.markRam && (inf.ld === 1 || inf.ld === 15);
+    const lunarLabel = inf.ld === 1 ? inf.ld + '/' + inf.lm + (inf.leap ? 'n' : '') : inf.ld;
+    const cls = ['cell', inf.m !== S.vm && 'out', jd === todayJd && 'today', jd === selJd && 'sel', inf.wd === 0 && 'sunday'].filter(Boolean).join(' ');
+    const bg = evs.length ? `style="background:${cat(evs[0].cat).tint}"` : '';
+    const aria = `${inf.d}/${inf.m}/${inf.y}, âm lịch ${inf.ld}/${inf.lm}${evs.length ? ', ' + evs.map(e => e.name).join(', ') : ''}`;
+    cells += `<button type="button" class="${cls}" ${bg} data-act="pick" data-arg="${jd}" aria-label="${esc(aria)}">
+      <span class="hd"><span class="num">${inf.d}</span><span class="lunar${special ? ' sp' : ''}">${lunarLabel}</span></span>
+      ${evs.slice(0, 2).map(e => `<span class="chip" style="color:${cat(e.cat).ink}">${esc(e.name)}</span>`).join('')}
+      ${evs.length > 2 ? `<span class="more">+${evs.length - 2} sự kiện</span>` : ''}
+      <span class="dots">${evs.slice(0, 3).map(e => `<i style="background:${cat(e.cat).color}"></i>`).join('')}</span>
+    </button>`;
+  }
+
+  const a = info(firstJd), b = info(firstJd + dim - 1);
+  const monthLunar = 'Âm lịch: tháng ' + lmName(a) + (a.lm !== b.lm || a.leap !== b.leap ? ' – tháng ' + lmName(b) : '') + ', năm ' + canChiYear(b.ly);
+
+  // ngày đang chọn
+  const si = info(selJd);
+  const selEvs = matches(si, S.events);
+  const selList = selEvs.length
+    ? selEvs.map(e => { const c = cat(e.cat); return `<div class="ev" style="background:${c.tint}"><span class="dot" style="background:${c.color}"></span><div><b style="color:${c.ink}">${esc(e.name)}</b><span>${c.label} · ${evDate(e)}${e.note ? ' · ' + esc(e.note) : ''}</span></div></div>`; }).join('')
+    : `<p class="empty">Chưa có ngày quan trọng nào trong ngày này.</p>`;
+
+  // sắp tới
+  const upcoming = S.events.map(e => ({ e, n: nextOcc(e, todayJd) })).filter(x => x.n)
+    .sort((x, y) => x.n.jd - y.n.jd).slice(0, 5)
+    .map(({ e, n }) => { const c = cat(e.cat); const soon = n.diff <= (e.remind || 0);
+      return `<button type="button" class="up" data-act="pick" data-arg="${n.jd}">
+        <span class="badge" style="background:${c.tint};color:${c.ink}"><b>${pad(n.inf.d)}</b><small>Th${n.inf.m}</small></span>
+        <span class="grow"><b>${esc(e.name)}</b><span>${WD_FULL[n.inf.wd]} · ${n.inf.ld}/${n.inf.lm} âm lịch</span></span>
+        <span class="pill${soon ? ' soon' : ''}">${countdown(n.diff)}</span></button>`; }).join('');
+
+  return `<div class="row">
+    <section class="card cal ${S.showLunar ? '' : 'hide-lunar'}" aria-label="Lịch tháng">
+      <div class="calhead">
+        <div class="t"><h1>Tháng ${S.vm}, ${S.vy}</h1><span>${monthLunar}</span></div>
+        <div class="tools">
+          <button type="button" class="btn" role="switch" aria-checked="${S.showLunar}" data-act="toggle" data-arg="showLunar"><span class="switch"><i></i></span>Âm lịch</button>
+          <button type="button" class="btn" data-act="today">Hôm nay</button>
+          <button type="button" class="btn icon" aria-label="Tháng trước" data-act="month" data-arg="-1">${ic.left}</button>
+          <button type="button" class="btn icon" aria-label="Tháng sau" data-act="month" data-arg="1">${ic.right}</button>
+        </div>
+      </div>
+      <div class="grid7">${wdOrder.map(w => `<div class="wd${w === 0 ? ' sun' : ''}">${WD_SHORT[w]}</div>`).join('')}</div>
+      <div class="grid7">${cells}</div>
+      <div class="legend">
+        ${CATS.map(c => `<span><i style="background:${c.color}"></i>${c.label}</span>`).join('')}
+        ${S.markRam ? `<span><b style="color:var(--accent)">1/9</b>Mùng 1 · Rằm</span>` : ''}
+      </div>
+    </section>
+    <aside class="side">
+      <section class="card" aria-label="Ngày đang chọn" style="padding:20px;gap:14px">
+        <div class="dayhead">
+          <div class="daybox"><small>${WD_SHORT[si.wd]}</small><b>${si.d}</b></div>
+          <div class="dayinfo"><b>${WD_FULL[si.wd]}, ${fmt(si)}</b>
+            <span>${lunarDayName(si.ld)} tháng ${lmName(si)} năm ${canChiYear(si.ly)}</span>
+            <small>Ngày ${canChiDay(selJd)} · Tháng ${canChiMonth(si.lm, si.ly)}</small></div>
+        </div>
+        <div class="hr"></div>
+        <div style="display:flex;flex-direction:column;gap:8px">${selList}</div>
+        <button type="button" class="dashed" data-act="addForDay">${ic.plus}Thêm ngày quan trọng</button>
+      </section>
+      <section class="card" aria-label="Sắp tới" style="padding:20px;gap:12px">
+        <h2 style="font-size:16px">Sắp tới</h2>
+        <div style="display:flex;flex-direction:column;gap:4px">${upcoming || '<p class="empty">Chưa có sự kiện.</p>'}</div>
+      </section>
+    </aside>
+  </div>`;
+}
+
+function renderConfig() {
+  const f = S.form, isLunar = f.type === 'lunar';
+  let dayOpts = '';
+  for (let i = 1; i <= (isLunar ? 30 : 31); i++) {
+    const t = isLunar ? (i === 15 ? 'Rằm (15)' : i <= 10 ? 'Mùng ' + i : i) : i;
+    dayOpts += `<option value="${i}"${i === f.day ? ' selected' : ''}>${t}</option>`;
+  }
+  let monthOpts = '';
+  for (let i = 1; i <= 12; i++) monthOpts += `<option value="${i}"${i === f.month ? ' selected' : ''}>Tháng ${isLunar ? LM[i - 1] : i}</option>`;
+  const remindOpts = [[0,'Không nhắc'],[1,'1 ngày'],[3,'3 ngày'],[7,'1 tuần'],[14,'2 tuần']]
+    .map(([v, t]) => `<option value="${v}"${v === f.remind ? ' selected' : ''}>${t}</option>`).join('');
+
+  const pn = nextOcc({ type:f.type, day:f.day, month:f.month }, todayJd);
+  const preview = pn
+    ? `<b>${WD_FULL[pn.inf.wd]}, ${fmt(pn.inf)}</b><span>${countdown(pn.diff)} · ${isLunar ? lunarDayName(f.day) + ' tháng ' + LM[f.month - 1] + ' âm lịch' : 'nhằm ' + pn.inf.ld + '/' + pn.inf.lm + ' âm lịch'}</span>`
+    : `<b>Ngày không hợp lệ</b><span>Tháng này không có ngày ${f.day}.</span>`;
+
+  const catBtns = CATS.map(c => { const on = f.cat === c.id;
+    return `<button type="button" class="cat" data-act="cat" data-arg="${c.id}" aria-pressed="${on}" ${on ? `style="background:${c.tint};color:${c.ink};border-color:${c.color}"` : ''}><i style="background:${c.color}"></i>${c.label}</button>`; }).join('');
+
+  const sorted = S.events.map(e => ({ e, n: nextOcc(e, todayJd) }))
+    .sort((x, y) => (x.n ? x.n.jd : 1e9) - (y.n ? y.n.jd : 1e9))
+    .filter(x => S.filter === 'all' || x.e.type === S.filter);
+  const items = sorted.map(({ e, n }) => { const c = cat(e.cat);
+    return `<div class="item${S.editingId === e.id ? ' editing' : ''}">
+      <span class="badge" style="width:46px;height:46px;background:${c.tint};color:${c.ink}"><b>${e.day}</b><small>Th ${e.month}${e.type === 'lunar' ? ' ÂL' : ''}</small></span>
+      <div class="grow"><b>${esc(e.name)}</b>
+        <span>${c.label} · ${evDate(e)}${e.remind ? ' · nhắc trước ' + e.remind + ' ngày' : ''}</span>
+        <span>${n ? 'Lần tới: ' + WD_FULL[n.inf.wd] + ', ' + fmt(n.inf) + ' · ' + countdown(n.diff) : 'Không có ngày này trong vài năm tới'}</span></div>
+      <button type="button" class="ib" aria-label="Sửa ${esc(e.name)}" data-act="edit" data-arg="${esc(e.id)}">${ic.edit}</button>
+      <button type="button" class="ib" aria-label="Xoá ${esc(e.name)}" data-act="del" data-arg="${esc(e.id)}">${ic.del}</button>
+    </div>`; }).join('');
+  const nSolar = S.events.filter(e => e.type === 'solar').length;
+  const setBtn = (key, label, hint) => `<button type="button" class="set" role="switch" aria-checked="${S[key]}" data-act="toggle" data-arg="${key}"><span><b>${label}</b><small>${hint}</small></span><span class="switch"><i></i></span></button>`;
+
+  return `<div class="row">
+    <section class="card form" aria-label="Thêm hoặc sửa">
+      <h2 style="font-size:18px">${S.editingId ? 'Sửa ngày quan trọng' : 'Thêm ngày quan trọng'}</h2>
+      <div class="field"><label for="f-name">Tên</label>
+        <input id="f-name" class="inp" type="text" value="${esc(f.name)}" placeholder="Ví dụ: Giỗ ông nội" data-in="name"></div>
+      <div class="field"><span class="lbl" id="f-type-l">Loại lịch</span>
+        <div class="seg" role="group" aria-labelledby="f-type-l" style="background:#EEF0F3">
+          <button type="button" data-act="type" data-arg="solar" aria-pressed="${!isLunar}">Dương lịch</button>
+          <button type="button" data-act="type" data-arg="lunar" aria-pressed="${isLunar}">Âm lịch</button>
+        </div></div>
+      <div class="two">
+        <div class="field"><label for="f-day">Ngày</label><select id="f-day" class="inp" data-ch="day">${dayOpts}</select></div>
+        <div class="field"><label for="f-month">Tháng</label><select id="f-month" class="inp" data-ch="month">${monthOpts}</select></div>
+      </div>
+      <div class="preview"><span style="color:var(--muted);flex:none">${ic.cal}</span><div><small>Lần tới rơi vào</small>${preview}</div></div>
+      <div class="field"><span class="lbl" id="f-cat-l">Nhóm</span><div class="cats" role="group" aria-labelledby="f-cat-l">${catBtns}</div></div>
+      <div class="field"><label for="f-remind">Nhắc trước</label><select id="f-remind" class="inp" data-ch="remind">${remindOpts}</select></div>
+      <div class="field"><label for="f-note">Ghi chú</label>
+        <textarea id="f-note" class="inp" rows="3" placeholder="Mâm cỗ, người cần báo, việc cần chuẩn bị…" data-in="note">${esc(f.note)}</textarea></div>
+      ${S.msg ? `<p class="msg${S.msgErr ? ' err' : ''}" role="status">${esc(S.msg)}</p>` : ''}
+      <div class="actions">
+        <button type="button" class="primary" data-act="save">${S.editingId ? 'Lưu thay đổi' : 'Lưu'}</button>
+        <button type="button" class="ghost" data-act="reset">${S.editingId ? 'Huỷ' : 'Làm mới'}</button>
+      </div>
+    </section>
+    <div class="listcol">
+      <section class="card" aria-label="Danh sách ngày quan trọng">
+        <div class="listhead">
+          <div class="t"><h2>Danh sách</h2><span>${S.events.length} ngày · ${nSolar} dương, ${S.events.length - nSolar} âm</span></div>
+          <div class="seg sm" role="group" aria-label="Lọc theo loại lịch">
+            ${[['all','Tất cả'],['solar','Dương lịch'],['lunar','Âm lịch']].map(([id, l]) => `<button type="button" data-act="filter" data-arg="${id}" aria-pressed="${S.filter === id}">${l}</button>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">${items || '<p class="empty" style="text-align:center;padding:24px 0">Chưa có ngày nào trong mục này.</p>'}</div>
+      </section>
+      <section class="card" aria-label="Kết nối Google Sheet" style="gap:12px">
+        <h2 style="font-size:16px">Kết nối Google Sheet</h2>
+        <p class="empty" style="font-size:13px">Dán URL Web App (đuôi /exec) và API key từ Apps Script. Thông tin chỉ lưu trong trình duyệt này, không nằm trong mã nguồn.</p>
+        <div class="field"><label for="f-url">URL Web App</label>
+          <input id="f-url" class="inp" type="url" value="${esc(S.apiForm.url)}" placeholder="https://script.google.com/macros/s/…/exec" data-api="url"></div>
+        <div class="field"><label for="f-key">API key</label>
+          <input id="f-key" class="inp" type="password" value="${esc(S.apiForm.key)}" autocomplete="off" data-api="key"></div>
+        ${S.apiErr || S.syncMsg ? `<p class="msg${S.apiErr || S.sync === 'err' ? ' err' : ''}" role="status">${esc(S.apiErr || S.syncMsg)}</p>` : ''}
+        <div class="tools2">
+          <button type="button" class="btn" data-act="connect">${S.api.url ? 'Lưu & tải lại' : 'Kết nối'}</button>
+          ${S.api.url ? '<button type="button" class="btn" data-act="disconnect">Ngắt kết nối</button>' : ''}
+        </div>
+      </section>
+      <section class="card" aria-label="Tuỳ chọn hiển thị" style="gap:4px">
+        <h2 style="font-size:16px;margin-bottom:8px">Hiển thị</h2>
+        ${setBtn('showLunar', 'Hiện ngày âm trên lịch', 'Số nhỏ ở góc mỗi ô ngày')}
+        ${setBtn('markRam', 'Đánh dấu mùng 1 và ngày rằm', 'Tô màu ngày 1 và 15 âm lịch để nhớ cúng')}
+        ${setBtn('weekMon', 'Tuần bắt đầu từ Thứ Hai', 'Tắt để bắt đầu từ Chủ nhật')}
+      </section>
+      <section class="card" aria-label="Sao lưu" style="gap:12px">
+        <h2 style="font-size:16px">Sao lưu dữ liệu</h2>
+        <p class="empty" style="font-size:13px">${S.api.url
+          ? 'Dữ liệu chính nằm trên Google Sheet. Nhập JSON sẽ ghi đè toàn bộ dữ liệu trên Sheet.'
+          : 'Dữ liệu lưu trong trình duyệt này. Xuất file để sao lưu hoặc chuyển sang máy khác.'}</p>
+        <div class="tools2">
+          <button type="button" class="btn" data-act="export">${ic.down}Xuất JSON</button>
+          <button type="button" class="btn" data-act="import">${ic.up}Nhập JSON</button>
+          <input type="file" id="f-import" accept="application/json,.json" hidden>
+        </div>
+      </section>
+    </div>
+  </div>`;
+}
+
+function render() {
+  document.documentElement.style.setProperty('--accent', '#C8372D');
+  document.getElementById('app').innerHTML =
+    `<div class="wrap">${renderHeader()}${S.view === 'calendar' ? renderCalendar() : renderConfig()}</div>`;
+}
+
+/* ---------- Hành động ---------- */
+function setForm(p) { S.form = { ...S.form, ...p }; S.msg = ''; }
+
+const actions = {
+  view: v => { S.view = v; },
+  pick: jd => { const i = info(+jd); S.sel = { y:i.y, m:i.m, d:i.d }; S.vy = i.y; S.vm = i.m; S.view = 'calendar'; },
+  month: d => { let m = S.vm + (+d), y = S.vy; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } S.vm = m; S.vy = y; },
+  today: () => { S.vy = today.y; S.vm = today.m; S.sel = { ...today }; },
+  toggle: k => { S[k] = !S[k]; persist(); },
+  addForDay: () => {
+    const jd = jdOf(S.sel.y, S.sel.m, S.sel.d), i = info(jd), t = S.form.type || 'lunar';
+    S.form = { ...blankForm(), type:t, day: t === 'solar' ? i.d : i.ld, month: t === 'solar' ? i.m : i.lm, srcJd: jd };
+    S.editingId = null; S.msg = ''; S.view = 'config';
+  },
+  type: t => {
+    const f = S.form; let day = f.day, month = f.month;
+    if (f.srcJd) { const i = info(f.srcJd); day = t === 'solar' ? i.d : i.ld; month = t === 'solar' ? i.m : i.lm; }
+    else if (t === 'lunar' && day > 30) day = 30;
+    setForm({ type:t, day, month });
+  },
+  cat: id => setForm({ cat:id }),
+  filter: id => { S.filter = id; },
+  save: () => {
+    const f = S.form, name = (f.name || '').trim();
+    if (!name) { S.msg = 'Vui lòng nhập tên ngày quan trọng.'; S.msgErr = true; return; }
+    const rec = { id: S.editingId || 'e' + Date.now(), name, type:f.type, day:f.day, month:f.month, cat:f.cat, remind:f.remind, note:f.note };
+    if (S.editingId) S.events = S.events.map(e => e.id === S.editingId ? rec : e);
+    else S.events = S.events.concat([rec]);
+    S.form = blankForm(); S.editingId = null; S.msg = 'Đã lưu “' + name + '”.'; S.msgErr = false;
+    persist();
+    push('upsert', { event:rec }, 'Đã lưu “' + name + '” lên Google Sheet.');
+  },
+  reset: () => { S.form = blankForm(); S.editingId = null; S.msg = ''; },
+  edit: id => {
+    const e = S.events.find(x => x.id === id); if (!e) return;
+    S.view = 'config'; S.editingId = id; S.msg = '';
+    S.form = { name:e.name, type:e.type, day:e.day, month:e.month, cat:e.cat, remind:e.remind || 0, note:e.note || '', srcJd:null };
+    window.scrollTo({ top:0, behavior:'smooth' });
+  },
+  del: id => {
+    const e = S.events.find(x => x.id === id); if (!e) return;
+    ask({ title:'Xoá “' + e.name + '”?',
+      message: cat(e.cat).label + ' · ' + evDate(e) + '. ' +
+        (S.api.url ? 'Ngày này cũng sẽ bị xoá trên Google Sheet.' : 'Thao tác này không thể hoàn tác.'),
+      ok:'Xoá' }).then(yes => {
+      if (!yes) return;
+      S.events = S.events.filter(x => x.id !== id);
+      if (S.editingId === id) { S.editingId = null; S.form = blankForm(); }
+      S.msg = 'Đã xoá “' + e.name + '”.'; S.msgErr = false;
+      persist();
+      push('delete', { id }, 'Đã xoá “' + e.name + '” trên Google Sheet.');
+      render();
+    });
+    return false;
+  },
+  connect: () => {
+    const url = (S.apiForm.url || '').trim(), key = (S.apiForm.key || '').trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) { S.apiErr = 'URL phải có dạng https://script.google.com/macros/s/…/exec'; return; }
+    if (!key) { S.apiErr = 'Vui lòng nhập API key.'; return; }
+    S.apiErr = ''; S.api = { url, key };
+    try { localStorage.setItem(API_STORE, JSON.stringify(S.api)); } catch (e) {}
+    pull(true);
+    return false;
+  },
+  disconnect: () => {
+    S.api = { url:'', key:'' }; S.apiForm = { url:'', key:'' }; S.apiErr = ''; S.sync = 'local'; S.syncMsg = '';
+    try { localStorage.removeItem(API_STORE); } catch (e) {}
+  },
+  export: () => {
+    const blob = new Blob([JSON.stringify({ events:S.events }, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'lich-nho-backup.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return false;
+  },
+  import: () => { document.getElementById('f-import').click(); return false; }
+};
+
+document.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-act]');
+  if (!el) return;
+  const res = actions[el.dataset.act](el.dataset.arg);
+  if (res !== false) render();
+});
+document.addEventListener('input', ev => {
+  const k = ev.target.dataset.in;
+  if (k) { S.form[k] = ev.target.value; } // không render lại để giữ con trỏ khi gõ
+  const a = ev.target.dataset.api;
+  if (a) S.apiForm[a] = ev.target.value;
+});
+document.addEventListener('change', async ev => {
+  const t = ev.target;
+  if (t.dataset.ch) { setForm({ [t.dataset.ch]: parseInt(t.value, 10), ...(t.dataset.ch !== 'remind' ? { srcJd:null } : {}) }); render(); }
+  if (t.id === 'f-import' && t.files[0]) {
+    const file = t.files[0];
+    t.value = ''; // cho phép chọn lại cùng file
+    if (S.api.url && !(await ask({ title:'Ghi đè dữ liệu trên Google Sheet?',
+      message:'Toàn bộ ngày hiện có trên Sheet sẽ được thay bằng nội dung file “' + file.name + '”.',
+      ok:'Nhập và ghi đè' }))) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!Array.isArray(data.events)) throw 0;
+        S.events = data.events; S.msg = 'Đã nhập ' + data.events.length + ' ngày.'; S.msgErr = false; persist();
+        push('replaceAll', { events:S.events }, 'Đã ghi ' + data.events.length + ' ngày lên Google Sheet.');
+      } catch (e) { S.msg = 'File không hợp lệ.'; S.msgErr = true; }
+      render();
+    };
+    r.readAsText(file);
+  }
+});
+
+render();
+pull();
+</script>
+</body>
+</html>
