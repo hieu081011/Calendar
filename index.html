@@ -26,7 +26,7 @@ h1,h2,p{margin:0}
 .brand{display:flex;align-items:center;gap:12px;flex:1 1 240px;min-width:0}
 .logo{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .brand b{font-size:18px;letter-spacing:-.01em;display:block}
-.brand small{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{font-size:12px;color:var(--muted);display:block}
 .seg{display:flex;background:#E8EAEE;border-radius:12px;padding:4px;gap:4px}
 .seg button{flex:1 1 0;min-height:40px;padding:0 18px;border:0;border-radius:9px;font-size:14px;font-weight:600;white-space:nowrap;background:transparent;color:var(--ink-2)}
 .seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.12)}
@@ -92,7 +92,7 @@ h1,h2,p{margin:0}
 .badge small{font-size:10px;font-weight:600}
 .grow{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
 .grow b{font-size:14px;font-weight:600}
-.grow b,.grow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grow b,.grow span{overflow-wrap:anywhere}
 .grow span{font-size:12px;color:var(--muted)}
 .pill{font-size:12px;font-weight:600;padding:4px 8px;border-radius:999px;background:#F1F2F5;color:var(--ink-2);white-space:nowrap;flex:none}
 .pill.soon{background:var(--accent-soft);color:var(--accent)}
@@ -145,6 +145,10 @@ textarea.inp{padding:10px 14px;resize:vertical}
   .side,.listcol{gap:14px}
   .card{padding:16px 12px;border-radius:18px}
   .top .seg{flex:1 1 100%}
+  .seg button{white-space:normal;line-height:1.2;padding:6px 10px}
+  .seg.sm{flex-wrap:wrap}
+  .seg.sm button{flex:1 1 auto}
+  .item{align-items:flex-start}
   .calhead h1{font-size:22px}
   .grid7{gap:4px}
   .cell{min-height:58px;padding:6px 2px;align-items:center;border-radius:10px}
@@ -353,6 +357,16 @@ function nextOcc(e, fromJd) {
   }
   return best === null ? null : { jd: best, diff: best - fromJd, inf: info(best) };
 }
+// Ngày dương mà sự kiện rơi vào trong năm dương lịch y (dùng để sắp xếp theo năm)
+function yearJd(e, y) {
+  if (e.type === 'solar') {
+    const last = new Date(y, e.month, 0).getDate(); // 29/2 năm không nhuận → 28/2
+    return jdOf(y, e.month, Math.min(e.day, last));
+  }
+  const lo = jdOf(y, 1, 1), hi = jdOf(y, 12, 31);
+  const hit = [y - 1, y].map(ly => lunarToJd(e.day, e.month, ly)).find(jd => jd && jd >= lo && jd <= hi);
+  return hit || lunarToJd(e.day, e.month, y) || lo;
+}
 
 /* ---------- Trạng thái ---------- */
 const DEFAULT_EVENTS = [
@@ -509,7 +523,7 @@ function renderCalendar() {
 
   // sắp tới
   const upcoming = S.events.map(e => ({ e, n: nextOcc(e, todayJd) })).filter(x => x.n)
-    .sort((x, y) => x.n.jd - y.n.jd).slice(0, 5)
+    .sort((x, y) => x.n.jd - y.n.jd).slice(0, 15)
     .map(({ e, n }) => { const c = cat(e.cat); const soon = n.diff <= (e.remind || 0);
       return `<button type="button" class="up" data-act="pick" data-arg="${n.jd}">
         <span class="badge" style="background:${c.tint};color:${c.ink}"><b>${pad(n.inf.d)}</b><small>Th${n.inf.m}</small></span>
@@ -574,12 +588,19 @@ function renderConfig() {
   const catBtns = CATS.map(c => { const on = f.cat === c.id;
     return `<button type="button" class="cat" data-act="cat" data-arg="${c.id}" aria-pressed="${on}" ${on ? `style="background:${c.tint};color:${c.ink};border-color:${c.color}"` : ''}><i style="background:${c.color}"></i>${c.label}</button>`; }).join('');
 
-  const sorted = S.events.map(e => ({ e, n: nextOcc(e, todayJd) }))
-    .sort((x, y) => (x.n ? x.n.jd : 1e9) - (y.n ? y.n.jd : 1e9))
-    .filter(x => S.filter === 'all' || x.e.type === S.filter);
-  const items = sorted.map(({ e, n }) => { const c = cat(e.cat);
+  // Lọc "Âm lịch": sắp theo ngày âm (Giêng → Chạp), ô trái hiện ngày âm.
+  // Còn lại: sắp theo ngày dương trong năm nay (1/1 → 31/12), ngày âm được quy đổi.
+  const byLunar = S.filter === 'lunar';
+  const sorted = S.events.filter(e => S.filter === 'all' || e.type === S.filter)
+    .map(e => ({ e, n: nextOcc(e, todayJd), y: info(yearJd(e, today.y)) }))
+    .sort((a, b) => (byLunar ? a.e.month - b.e.month || a.e.day - b.e.day : a.y.jd - b.y.jd)
+      || a.e.name.localeCompare(b.e.name, 'vi'));
+  const items = sorted.map(({ e, n, y }) => { const c = cat(e.cat);
+    const badge = byLunar
+      ? `<b>${pad(e.day)}</b><small>Th ${e.month} ÂL</small>`
+      : `<b>${pad(y.d)}</b><small>Th ${y.m}</small>`;
     return `<div class="item${S.editingId === e.id ? ' editing' : ''}">
-      <span class="badge" style="width:46px;height:46px;background:${c.tint};color:${c.ink}"><b>${e.day}</b><small>Th ${e.month}${e.type === 'lunar' ? ' ÂL' : ''}</small></span>
+      <span class="badge" style="width:46px;height:46px;background:${c.tint};color:${c.ink}" title="Năm ${today.y}: ${fmt(y)}">${badge}</span>
       <div class="grow"><b>${esc(e.name)}</b>
         <span>${c.label} · ${evDate(e)}${e.remind ? ' · nhắc trước ' + e.remind + ' ngày' : ''}</span>
         <span>${n ? 'Lần tới: ' + WD_FULL[n.inf.wd] + ', ' + fmt(n.inf) + ' · ' + countdown(n.diff) : 'Không có ngày này trong vài năm tới'}</span></div>
