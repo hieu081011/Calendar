@@ -392,7 +392,7 @@ const today = { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
 const S = {
   view:'calendar', vy:today.y, vm:today.m, sel:{ ...today },
   showLunar:true, markRam:true, weekMon:true, upcomingLimit:5,
-  filter:'all', editingId:null, msg:'', msgErr:false, bkMsg:'', bkErr:false,
+  filter:'all', catFilter:'all', editingId:null, msg:'', msgErr:false, bkMsg:'', bkErr:false,
   form: blankForm(), events: DEFAULT_EVENTS.map(e => ({ ...e })),
   api: { ...DEFAULT_API }, apiForm: { ...DEFAULT_API }, apiErr:'', sync: DEFAULT_API.url ? 'loading' : 'local', syncMsg:''
 };
@@ -610,7 +610,7 @@ function renderConfig() {
   // Lọc "Âm lịch": sắp theo ngày âm (Giêng → Chạp), ô trái hiện ngày âm.
   // Còn lại: sắp theo ngày dương trong năm nay (1/1 → 31/12), ngày âm được quy đổi.
   const byLunar = S.filter === 'lunar';
-  const sorted = S.events.filter(e => S.filter === 'all' || e.type === S.filter)
+  const sorted = S.events.filter(e => (S.filter === 'all' || e.type === S.filter) && (S.catFilter === 'all' || cat(e.cat).id === S.catFilter))
     .map(e => ({ e, n: nextOcc(e, todayJd), y: info(yearJd(e, today.y)) }))
     .sort((a, b) => (byLunar ? a.e.month - b.e.month || a.e.day - b.e.day : a.y.jd - b.y.jd)
       || a.e.name.localeCompare(b.e.name, 'vi'));
@@ -627,6 +627,10 @@ function renderConfig() {
       <button type="button" class="ib" aria-label="Xoá ${esc(e.name)}" data-act="del" data-arg="${esc(e.id)}">${ic.del}</button>
     </div>`; }).join('');
   const nSolar = S.events.filter(e => e.type === 'solar').length;
+  const catCount = id => S.events.filter(e => id === 'all' || cat(e.cat).id === id).length;
+  const catFilterBtns = [{ id:'all', label:'Tất cả nhóm' }, ...CATS].map(c => { const on = S.catFilter === c.id;
+    const style = on ? (c.tint ? `style="background:${c.tint};color:${c.ink};border-color:${c.color}"` : 'style="background:var(--ink);color:#fff;border-color:var(--ink)"') : '';
+    return `<button type="button" class="cat" data-act="catFilter" data-arg="${c.id}" aria-pressed="${on}" ${style}>${c.color ? `<i style="background:${c.color}"></i>` : ''}${c.label} <span style="opacity:.7">${catCount(c.id)}</span></button>`; }).join('');
 
   return `<div class="row">
     <section class="card form" aria-label="Thêm hoặc sửa">
@@ -661,6 +665,7 @@ function renderConfig() {
             ${[['all','Tất cả'],['solar','Dương lịch'],['lunar','Âm lịch']].map(([id, l]) => `<button type="button" data-act="filter" data-arg="${id}" aria-pressed="${S.filter === id}">${l}</button>`).join('')}
           </div>
         </div>
+        <div class="cats" role="group" aria-label="Lọc theo nhóm">${catFilterBtns}</div>
         <div style="display:flex;flex-direction:column;gap:8px">${items || '<p class="empty" style="text-align:center;padding:24px 0">Chưa có ngày nào trong mục này.</p>'}</div>
       </section>
     </div>
@@ -738,6 +743,7 @@ const actions = {
   },
   cat: id => setForm({ cat:id }),
   filter: id => { S.filter = id; },
+  catFilter: id => { S.catFilter = id; },
   save: () => {
     const f = S.form, name = (f.name || '').trim();
     if (!name) { S.msg = 'Vui lòng nhập tên ngày quan trọng.'; S.msgErr = true; return; }
