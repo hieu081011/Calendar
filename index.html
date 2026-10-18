@@ -702,8 +702,8 @@ function renderSettings() {
       <section class="card" aria-label="Sao lưu" style="gap:12px">
         <h2 style="font-size:16px">Sao lưu dữ liệu</h2>
         <p class="empty" style="font-size:13px">${S.api.url
-          ? 'Dữ liệu chính nằm trên Google Sheet. Nhập JSON sẽ ghi đè toàn bộ dữ liệu trên Sheet.'
-          : 'Dữ liệu lưu trong trình duyệt này. Xuất file để sao lưu hoặc chuyển sang máy khác.'}</p>
+          ? 'Dữ liệu chính nằm trên Google Sheet. Nhập JSON sẽ thêm các ngày trong file vào Sheet, không xoá ngày đang có.'
+          : 'Dữ liệu lưu trong trình duyệt này. Nhập JSON sẽ thêm các ngày trong file, không xoá ngày đang có.'}</p>
         ${S.bkMsg ? `<p class="msg${S.bkErr ? ' err' : ''}" role="status">${esc(S.bkMsg)}</p>` : ''}
         <div class="tools2">
           <button type="button" class="btn" data-act="export">${ic.down}Xuất JSON</button>
@@ -723,6 +723,28 @@ function render() {
 
 /* ---------- Hành động ---------- */
 function setForm(p) { S.form = { ...S.form, ...p }; S.msg = ''; }
+
+// Gộp danh sách nhập vào danh sách hiện có:
+// trùng id → cập nhật (nếu khác); trùng tên + loại lịch + ngày/tháng → bỏ qua; còn lại → thêm mới.
+const EV_FIELDS = ['name','type','day','month','cat','remind','note'];
+function mergeEvents(base, incoming) {
+  const out = base.slice();
+  const key = e => [String(e.name).trim().toLowerCase(), e.type, e.day, e.month].join('|');
+  const keys = new Set(out.map(key));
+  let added = 0, updated = 0, skipped = 0;
+  incoming.forEach((raw, i) => {
+    if (!raw || !String(raw.name || '').trim()) { skipped++; return; }
+    const e = { ...raw, name: String(raw.name).trim(), type: raw.type === 'solar' ? 'solar' : 'lunar',
+      day: +raw.day || 1, month: +raw.month || 1, cat: raw.cat || 'other', remind: +raw.remind || 0, note: raw.note || '' };
+    const at = e.id ? out.findIndex(x => x.id === e.id) : -1;
+    if (at >= 0) {
+      if (EV_FIELDS.every(f => out[at][f] === e[f])) skipped++;
+      else { out[at] = { ...out[at], ...e }; updated++; }
+    } else if (keys.has(key(e))) skipped++;
+    else { out.push({ ...e, id: e.id || 'e' + Date.now() + '-' + i }); keys.add(key(e)); added++; }
+  });
+  return { events: out, added, updated, skipped };
+}
 
 const actions = {
   view: v => { S.view = v; },
@@ -822,20 +844,29 @@ document.addEventListener('change', async ev => {
   if (t.id === 'f-import' && t.files[0]) {
     const file = t.files[0];
     t.value = ''; // cho phép chọn lại cùng file
-    if (S.api.url && !(await ask({ title:'Ghi đè dữ liệu trên Google Sheet?',
-      message:'Toàn bộ ngày hiện có trên Sheet sẽ được thay bằng nội dung file “' + file.name + '”.',
-      ok:'Nhập và ghi đè' }))) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = JSON.parse(r.result);
-        if (!Array.isArray(data.events)) throw 0;
-        S.events = data.events; S.bkMsg = 'Đã nhập ' + data.events.length + ' ngày.'; S.bkErr = false; persist();
-        push('replaceAll', { events:S.events }, 'Đã ghi ' + data.events.length + ' ngày lên Google Sheet.');
-      } catch (e) { S.bkMsg = 'File không hợp lệ.'; S.bkErr = true; }
-      render();
-    };
-    r.readAsText(file);
+    const done = (msg, err) => { S.bkMsg = msg; S.bkErr = !!err; render(); };
+    let incoming;
+    try {
+      const data = JSON.parse(await file.text());
+      incoming = Array.isArray(data) ? data : data.events;
+      if (!Array.isArray(incoming)) throw 0;
+    } catch (e) { return done('File không hợp lệ.', true); }
+    // Đang kết nối Sheet: lấy bản mới nhất trước khi gộp để không mất thay đổi từ thiết bị khác
+    if (S.api.url) {
+      done('Đang tải dữ liệu mới nhất từ Google Sheet…');
+      try { S.events = (await api('list')).events; persist(); }
+      catch (e) { return done('Không tải được Google Sheet (' + e.message + '), chưa nhập gì.', true); }
+    }
+    const m = mergeEvents(S.events, incoming);
+    if (!m.added && !m.updated) return done('Không có gì mới: ' + m.skipped + ' ngày trong file đã có sẵn.');
+    const yes = await ask({ title:'Nhập từ “' + file.name + '”?',
+      message:'Thêm ' + m.added + ' ngày mới, cập nhật ' + m.updated + ' ngày, bỏ qua ' + m.skipped + ' ngày đã có. Dữ liệu hiện tại được giữ nguyên.',
+      ok:'Nhập' });
+    if (!yes) return done('');
+    S.events = m.events; persist();
+    // danh sách đã gộp trên nền bản mới nhất từ Sheet → ghi lại toàn bộ là an toàn
+    push('replaceAll', { events:S.events }, 'Đã ghi ' + S.events.length + ' ngày lên Google Sheet.');
+    done('Đã thêm ' + m.added + ', cập nhật ' + m.updated + ' ngày.');
   }
 });
 
